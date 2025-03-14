@@ -1,2 +1,2 @@
-## 基于OpenSSl实现的RSA加密算法
+## 基于OpenSSl(CGO)实现的RSA加密算法
 
