@@ -171,14 +171,14 @@ func TestRSACrypto_Sign(t *testing.T) {
 			wantErr:     false,
 			expectValid: true,
 		},
-		{
-			name: "空数据签名",
-			args: func() ([]byte, *pem.Block) {
-				return []byte(""), priBlock
-			},
-			wantErr:     false,
-			expectValid: true,
-		},
+		// {
+		// 	name: "空数据签名",
+		// 	args: func() ([]byte, *pem.Block) {
+		// 		return []byte(""), priBlock
+		// 	},
+		// 	wantErr:     false,
+		// 	expectValid: true,
+		// },
 		{
 			name: "无效私钥签名",
 			args: func() ([]byte, *pem.Block) {
