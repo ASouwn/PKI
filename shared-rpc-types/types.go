@@ -1,5 +1,11 @@
 package sharedrpctypes
 
+var (
+	ServerNmae        = "RpcRegister"             // used by server to regist
+	GetServerMethod   = "RpcRegister.GetServer"   // used by client to get server
+	WriteServerMethod = "RpcRegister.WriteServer" // used by client to write server
+)
+
 // This struct is used to register the server information
 // will get the server information from the client
 // network: tcp or udp, others the server provides
