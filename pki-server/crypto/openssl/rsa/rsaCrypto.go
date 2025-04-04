@@ -13,7 +13,7 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/ASouwn/PKI/pki_server/crypto"
+	"github.com/ASouwn/PKI/pkiserver/crypto"
 )
 
 type RSACrypto struct{}
