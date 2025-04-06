@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"sync"
 
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
 )
@@ -15,6 +16,7 @@ type ServerInfo = rpctypes.ServerInfo
 type Server = rpctypes.Server
 
 type Register struct {
+	mu        sync.RWMutex
 	ServerMap map[ServerKey]ServerInfo
 }
 
@@ -28,26 +30,30 @@ func NewRegister() *Register {
 // write server to the center
 func (r *Register) WriteServer(args *Server, reply *string) error {
 	log.Println("Call WriteServer")
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.ServerMap[args.ServerKey] = args.ServerInfo
-	*reply = "Server registered successfully"
+	*reply = "If server registered successfully: true"
 	return nil
 }
 
 // get server from the center
 func (r *Register) GetServer(args *ServerKey, reply *ServerInfo) error {
 	log.Println("Call GetServer")
-	if _, ok := r.ServerMap[*args]; !ok {
-		*reply = ServerInfo{}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	info, ok := r.ServerMap[*args]
+	if !ok {
 		return fmt.Errorf("Server not found")
 	}
-	*reply = r.ServerMap[*args]
+	*reply = info
 	return nil
 }
 
 var _ rpctypes.RpcRegister = (*Register)(nil)
 
 func StartRegisterServer(port string) error {
-	err := rpc.RegisterName(rpctypes.ServerNmae, NewRegister())
+	err := rpc.RegisterName(rpctypes.RPCServerKey.ServerName, NewRegister())
 	if err != nil {
 		return fmt.Errorf("Error registering RPC server: %v", err)
 	}
