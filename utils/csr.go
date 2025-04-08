@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
 )
 
 // 生成证书签名请求（CSR PEM格式）
@@ -41,7 +43,7 @@ func CreateCSR(privateBlock *pem.Block, subject pkix.Name) (*pem.Block, error) {
 }
 
 // 将CSR提交到ra，由ra提交给ca并返回证书
-func SubmitCSRToRA(csrPem *pem.Block, raAddr string) (*pem.Block, error) {
+func SubmitCSRToRA(csrPem *pem.Block, registerAddr string) (*x509.Certificate, error) {
 	// Verify the CSR
 	// Parse the CSR from the PEM block
 	_, err := x509.ParseCertificateRequest(csrPem.Bytes)
@@ -52,6 +54,9 @@ func SubmitCSRToRA(csrPem *pem.Block, raAddr string) (*pem.Block, error) {
 
 	// Send the CSR to the RA for verification and submission to the CA
 	// By RPC
-
-	return nil, nil
+	re, err := GetRedServer(rpctypes.RAHandleCSRMethod, csrPem, registerAddr)
+	if err != nil {
+		return nil, fmt.Errorf("faild when getserver: %v", err)
+	}
+	return re.(*x509.Certificate), nil
 }

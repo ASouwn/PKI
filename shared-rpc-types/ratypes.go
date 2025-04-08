@@ -1,7 +1,10 @@
 package sharedrpctypes
 
-import "encoding/pem"
+import (
+	"crypto/x509"
+	"encoding/pem"
+)
 
 type RAServer interface {
-	HandleCSR(csrPem *pem.Block, reply *string) error
+	HandleCSR(csrPem *pem.Block, reply *x509.Certificate) error
 }

@@ -27,16 +27,8 @@ func main() {
 		Country:      []string{"CN"},
 	})
 	log.Printf("CSR: \n%+s\n", pem.EncodeToMemory(csr))
-	// log.Printf("Parse CSR: \n%+v\n", func() *x509.CertificateRequest {
-	// 	csrPem, err := x509.ParseCertificateRequest(csr.Bytes)
-	// 	if err != nil {
-	// 		log.Printf("Failed to parse CSR: %v", err)
-	// 		return nil
-	// 	}
-	// 	return csrPem
-	// }())
 
 	// submit the CSR to RA and get the x509 certificate from ca
-	cer, _ := utils.SubmitCSRToRA(csr, "localhost:8080")
+	cer, _ := utils.SubmitCSRToRA(csr, "localhost:3001")
 	log.Printf("Submit CSR to CA: \n%+s\n", cer)
 }

@@ -4,7 +4,9 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/rpc"
+	"reflect"
 	"strings"
 
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
@@ -29,6 +31,7 @@ func WriteServer(server *rpctypes.Server, registerAddress string) error {
 // 对于客户端的使用函数
 // 只需要将将要调用的服务(serverMethod)和参数(args)还有注册中心的地址(registerAddress)传入即可
 func GetRedServer(serverMethod string, args interface{}, registerAddress string) (interface{}, error) {
+	log.Printf("the type of args is %s\n", reflect.TypeOf(args))
 	serverKey := strings.Split(serverMethod, ".")[0]
 
 	// 连接注册中心
@@ -39,10 +42,13 @@ func GetRedServer(serverMethod string, args interface{}, registerAddress string)
 	}
 	defer clientRpc.Close()
 	var serverInfo rpctypes.ServerInfo
-	err = clientRpc.Call(rpctypes.GetServerMethod, serverKey, &serverInfo)
+	err = clientRpc.Call(rpctypes.GetServerMethod, &rpctypes.ServerKey{
+		ServerName: serverKey,
+	}, &serverInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get server info: %v", err)
 	}
+	log.Printf("serched ServerMethod(%s) addr is %s", serverMethod, serverInfo.ServerAddress+":"+serverInfo.Port)
 	// 连接服务端
 	// 通过服务端的地址和端口号连接服务端
 	clientServer, err := rpc.DialHTTP("tcp", serverInfo.ServerAddress+":"+serverInfo.Port)

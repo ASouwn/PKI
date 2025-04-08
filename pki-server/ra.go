@@ -10,6 +10,7 @@ import (
 	"net/rpc"
 
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
+	"github.com/ASouwn/PKI/utils"
 )
 
 type RA struct{}
@@ -27,9 +28,10 @@ func SubmitCSRToCA(csr *x509.CertificateRequest, addr string) (*pem.Block, error
 	return nil, nil
 }
 
-func (r *RA) HandleCSR(csrPem *pem.Block, reply *string) error {
+func (r *RA) HandleCSR(csrPem *pem.Block, reply *x509.Certificate) error {
 	log.Printf("get and handle CSR\n")
 	if csrPem.Type != "CERTIFICATE REQUEST" {
+		log.Printf("got wrong csr type\n")
 		return nil
 	}
 	csrRequest, err := x509.ParseCertificateRequest(csrPem.Bytes)
@@ -44,12 +46,15 @@ func (r *RA) HandleCSR(csrPem *pem.Block, reply *string) error {
 	}
 
 	// Submit the CSR to CA
-	// cer, err := SubmitCSRToCA(csrRequest, "localhost:8081")
-	// if err != nil {
-	// 	return err
-	// }
-
-	*reply = "send CSR to CA successfully"
+	cert, err := utils.GetRedServer(rpctypes.CAHandleCSRMethod, csrRequest, "localhost:3001")
+	if err != nil {
+		return fmt.Errorf("got wrong when submit csr to ca: %v", err)
+	}
+	certParsed, ok := cert.(*x509.Certificate)
+	if !ok {
+		return fmt.Errorf("failed to assert type *x509.Certificate")
+	}
+	*reply = *certParsed
 	return nil
 }
 

@@ -33,13 +33,14 @@ func (r *Register) WriteServer(args *Server, reply *string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.ServerMap[args.ServerKey] = args.ServerInfo
+	log.Printf("%s is registed in this addr: %s", args.ServerKey.ServerName, args.ServerInfo.ServerAddress+":"+args.ServerInfo.Port)
 	*reply = "If server registered successfully: true"
 	return nil
 }
 
 // get server from the center
 func (r *Register) GetServer(args *ServerKey, reply *ServerInfo) error {
-	log.Println("Call GetServer")
+	log.Printf("Call GetServer: trying to call %s\n", args.ServerName)
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	info, ok := r.ServerMap[*args]
@@ -55,12 +56,12 @@ var _ rpctypes.RpcRegister = (*Register)(nil)
 func StartRegisterServer(port string) error {
 	err := rpc.RegisterName(rpctypes.RPCServerKey.ServerName, NewRegister())
 	if err != nil {
-		return fmt.Errorf("Error registering RPC server: %v", err)
+		return fmt.Errorf("error registering RPC server: %v", err)
 	}
 	rpc.HandleHTTP()
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		return fmt.Errorf("Error starting listener: %v", err)
+		return fmt.Errorf("error starting listener: %v", err)
 	}
 	defer listener.Close()
 	fmt.Printf("Register server is running on port %s...\n", port)
