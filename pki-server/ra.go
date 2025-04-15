@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"reflect"
 
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
 	"github.com/ASouwn/PKI/utils"
@@ -23,12 +24,7 @@ func ValidateIdentity(csr *x509.CertificateRequest) error {
 	return nil
 }
 
-// 提交证书申请到CA
-func SubmitCSRToCA(csr *x509.CertificateRequest, addr string) (*pem.Block, error) {
-	return nil, nil
-}
-
-func (r *RA) HandleCSR(csrPem *pem.Block, reply *x509.Certificate) error {
+func (r *RA) HandleCSR(csrPem *pem.Block, reply *pem.Block) error {
 	log.Printf("get and handle CSR\n")
 	if csrPem.Type != "CERTIFICATE REQUEST" {
 		log.Printf("got wrong csr type\n")
@@ -46,14 +42,17 @@ func (r *RA) HandleCSR(csrPem *pem.Block, reply *x509.Certificate) error {
 	}
 
 	// Submit the CSR to CA
+	log.Printf("trying to call GetRedServer with method(%s) and args(%s)\n", rpctypes.CAHandleCSRMethod, reflect.TypeOf(csrRequest))
 	cert, err := utils.GetRedServer(rpctypes.CAHandleCSRMethod, csrRequest, "localhost:3001")
 	if err != nil {
 		return fmt.Errorf("got wrong when submit csr to ca: %v", err)
 	}
-	certParsed, ok := cert.(*x509.Certificate)
+	log.Printf("after submit csr to ca\n")
+	certParsed, ok := cert.(*pem.Block)
 	if !ok {
-		return fmt.Errorf("failed to assert type *x509.Certificate")
+		return fmt.Errorf("failed to assert type *pem.Block")
 	}
+
 	*reply = *certParsed
 	return nil
 }
@@ -63,24 +62,33 @@ var _ rpctypes.RAServer = (*RA)(nil)
 func StarRaServer(port, registerAddr string) {
 
 	log.Println("Trying to regist Handle CSR server to register server")
-	// Connect to the register server
-	client, err := rpc.DialHTTP("tcp", registerAddr)
-	if err != nil {
-		log.Fatalf("Failed to connect to register server: %v", err)
-	}
-	defer client.Close()
-	// Register the server with the RpcRegister service
-	server := &rpctypes.Server{
+
+	utils.WriteServer(&rpctypes.Server{
+		ServerKey: rpctypes.RAServerKey,
 		ServerInfo: rpctypes.ServerInfo{
 			Network:       "tcp",
 			ServerAddress: "localhost",
 			Port:          port,
 		},
-		ServerKey: rpctypes.RAServerKey,
-	}
-	var reply string
-	client.Call(rpctypes.WriteServerMethod, server, &reply)
-	log.Printf("Reply: %s\n", reply)
+	}, registerAddr)
+	// Connect to the register server
+	// client, err := rpc.DialHTTP("tcp", registerAddr)
+	// if err != nil {
+	// 	log.Fatalf("Failed to connect to register server: %v", err)
+	// }
+	// defer client.Close()
+	// Register the server with the RpcRegister service
+	// server := &rpctypes.Server{
+	// 	ServerInfo: rpctypes.ServerInfo{
+	// 		Network:       "tcp",
+	// 		ServerAddress: "localhost",
+	// 		Port:          port,
+	// 	},
+	// 	ServerKey: rpctypes.RAServerKey,
+	// }
+	// var reply string
+	// client.Call(rpctypes.WriteServerMethod, server, &reply)
+	// log.Printf("Reply: %s\n", reply)
 
 	// Start the RA server
 	// Handle the CSR submission

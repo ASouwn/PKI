@@ -15,6 +15,7 @@ import (
 	"net/rpc"
 	"time"
 
+	cry "github.com/ASouwn/PKI/pki-server/crypto"
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
 	"github.com/ASouwn/PKI/utils"
 )
@@ -26,7 +27,9 @@ var (
 
 // 生成自签名根证书
 func CreateRootCA(subject pkix.Name, validity time.Duration) (*x509.Certificate, *pem.Block, error) {
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	priPem, _, _ := cry.GetCryptoInstance().GenerateKeyPair()
+
+	privKey, err := x509.ParsePKCS1PrivateKey(priPem.Bytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -51,12 +54,7 @@ func CreateRootCA(subject pkix.Name, validity time.Duration) (*x509.Certificate,
 		return nil, nil, err
 	}
 
-	privKeyPEM := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privKey),
-	}
-
-	return cert, privKeyPEM, nil
+	return cert, priPem, nil
 }
 
 // 签发中间CA证书
@@ -117,10 +115,20 @@ type CA struct{}
 
 var _ rpctypes.CAServer = (*CA)(nil)
 
-func (c *CA) HandleCSR(csr *x509.CertificateRequest, reply *x509.Certificate) error {
+func (c *CA) HandleCSR(csrPem *pem.Block, reply *pem.Block) error {
 	log.Printf("try to handle csr from RA")
+
+	csr, err := x509.ParseCertificateRequest(csrPem.Bytes)
+	if err != nil {
+		log.Printf("Failed to parse CSR: %v", err)
+		return err
+	}
 	// 加载ca的证书与私钥
 	caCert, caKey, err := LoadCertAndKeyFromFile(caCertPath, caKeyPath)
+	if err != nil {
+		log.Printf("Failed to load CA certificate and key: %s", err)
+		return err
+	}
 	// 创建证书模板
 	template := &x509.Certificate{
 		SerialNumber:          GenerateSerialNumber(),
@@ -131,19 +139,30 @@ func (c *CA) HandleCSR(csr *x509.CertificateRequest, reply *x509.Certificate) er
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
+	log.Printf("trying to sign certificate with ca cert and key\n")
 	// 4. 签发证书
+	caKeyParsed, err := x509.ParsePKCS1PrivateKey(caKey.Bytes)
+	if err != nil {
+		log.Printf("Failed to parse CA private key: %v", err)
+		return err
+	}
 	certBytes, err := x509.CreateCertificate(
 		rand.Reader,
 		template,
 		caCert,
 		csr.PublicKey,
-		caKey,
+		caKeyParsed,
 	)
 	if err != nil {
+		log.Printf("Failed to create certificate: %v", err)
 		return err
 	}
-	cer, err := x509.ParseCertificate(certBytes)
-	*reply = *cer
+	cerPem := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	}
+	log.Printf("successfully sign certificate: \n%+s\n", pem.EncodeToMemory(cerPem))
+	*reply = *cerPem
 	return nil
 }
 

@@ -1,7 +1,9 @@
 package sharedrpctypes
 
-import "crypto/x509"
+import (
+	"encoding/pem"
+)
 
 type CAServer interface {
-	HandleCSR(csr *x509.CertificateRequest, reply *x509.Certificate) error
+	HandleCSR(csr *pem.Block, reply *pem.Block) error
 }

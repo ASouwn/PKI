@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"encoding/pem"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -58,7 +59,7 @@ func GetRedServer(serverMethod string, args interface{}, registerAddress string)
 	defer clientServer.Close()
 
 	// todo: 需要通过serverMethod来断言args的类型，同时断言reply的类型，然后连接服务并返回relpy
-	var reply interface{}
+	var reply pem.Block
 	err = clientServer.Call(serverMethod, args, &reply)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call server method: %v", err)

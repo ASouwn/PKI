@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 
 	rpctypes "github.com/ASouwn/PKI/shared-rpc-types"
@@ -54,6 +55,7 @@ func SubmitCSRToRA(csrPem *pem.Block, registerAddr string) (*x509.Certificate, e
 
 	// Send the CSR to the RA for verification and submission to the CA
 	// By RPC
+	log.Printf("tring to call GetRedServer with method(%s) and args(%s)\n", rpctypes.RAHandleCSRMethod, reflect.TypeOf(csrPem))
 	re, err := GetRedServer(rpctypes.RAHandleCSRMethod, csrPem, registerAddr)
 	if err != nil {
 		return nil, fmt.Errorf("faild when getserver: %v", err)
