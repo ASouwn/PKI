@@ -44,7 +44,7 @@ func CreateCSR(privateBlock *pem.Block, subject pkix.Name) (*pem.Block, error) {
 }
 
 // 将CSR提交到ra，由ra提交给ca并返回证书
-func SubmitCSRToRA(csrPem *pem.Block, registerAddr string) (*x509.Certificate, error) {
+func SubmitCSRToRA(csrPem *pem.Block, registerAddr string) (*pem.Block, error) {
 	// Verify the CSR
 	// Parse the CSR from the PEM block
 	_, err := x509.ParseCertificateRequest(csrPem.Bytes)
@@ -60,5 +60,5 @@ func SubmitCSRToRA(csrPem *pem.Block, registerAddr string) (*x509.Certificate, e
 	if err != nil {
 		return nil, fmt.Errorf("faild when getserver: %v", err)
 	}
-	return re.(*x509.Certificate), nil
+	return re.(*pem.Block), nil
 }

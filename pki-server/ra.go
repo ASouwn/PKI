@@ -43,7 +43,7 @@ func (r *RA) HandleCSR(csrPem *pem.Block, reply *pem.Block) error {
 
 	// Submit the CSR to CA
 	log.Printf("trying to call GetRedServer with method(%s) and args(%s)\n", rpctypes.CAHandleCSRMethod, reflect.TypeOf(csrRequest))
-	cert, err := utils.GetRedServer(rpctypes.CAHandleCSRMethod, csrRequest, "localhost:3001")
+	cert, err := utils.GetRedServer(rpctypes.CAHandleCSRMethod, csrPem, "localhost:3001")
 	if err != nil {
 		return fmt.Errorf("got wrong when submit csr to ca: %v", err)
 	}
