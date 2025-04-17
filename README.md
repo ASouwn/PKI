@@ -30,6 +30,13 @@ pki/
 └── README.md                 # 项目说明文档
 ~~~
 
+~~~cmd
+go run ./register.go
+go run ./ca.go
+go run ./ra.go
+go run ./http.go
+~~~
+
 ## 项目说明
 
 1. 基于OpenSSL，支持生成自签名证书，并加入额外的信任链信息；
