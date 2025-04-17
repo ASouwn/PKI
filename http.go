@@ -23,6 +23,16 @@ func main() {
 	cer, _ := utils.SubmitCSRToRA(csr, "localhost:3001")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Add CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		w.Header().Set("Content-Type", "text/plain")
 		fmt.Fprintf(w, "Hello, World!\n")
 		fmt.Fprintf(w, "Private Key: \n%s\n", pem.EncodeToMemory(pri))

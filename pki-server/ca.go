@@ -168,24 +168,40 @@ func (c *CA) HandleCSR(csrPem *pem.Block, reply *pem.Block) error {
 
 func StartCAServer(port, registerAddr string) {
 	http.HandleFunc("/ca-cert", func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		caCert, _, err := LoadCertAndKeyFromFile(caCertPath, caKeyPath)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to load CA certificate: %v", err), http.StatusInternalServerError)
 			return
 		}
 		pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})
-		w.Header().Set("Content-Type", "application/x-pem-file")
+		w.Header().Set("Content-Type", "text/plain")
 		w.Write(pemCert)
 	})
 
 	http.HandleFunc("/ca-key", func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		_, caKey, err := LoadCertAndKeyFromFile(caCertPath, caKeyPath)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to load CA private key: %v", err), http.StatusInternalServerError)
 			return
 		}
 		pemKey := pem.EncodeToMemory(caKey)
-		w.Header().Set("Content-Type", "application/x-pem-file")
+		w.Header().Set("Content-Type", "text/plain")
 		w.Write(pemKey)
 	})
 	// Generate CA cert and key

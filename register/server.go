@@ -57,6 +57,16 @@ var _ rpctypes.RpcRegister = (*Register)(nil)
 func StartRegisterServer(port string) error {
 	register := NewRegister()
 	http.HandleFunc("/servers", func(w http.ResponseWriter, r *http.Request) {
+		// Add CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle preflight request
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		register.mu.RLock()
 		defer register.mu.RUnlock()
 
