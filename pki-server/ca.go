@@ -167,6 +167,27 @@ func (c *CA) HandleCSR(csrPem *pem.Block, reply *pem.Block) error {
 }
 
 func StartCAServer(port, registerAddr string) {
+	http.HandleFunc("/ca-cert", func(w http.ResponseWriter, r *http.Request) {
+		caCert, _, err := LoadCertAndKeyFromFile(caCertPath, caKeyPath)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to load CA certificate: %v", err), http.StatusInternalServerError)
+			return
+		}
+		pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})
+		w.Header().Set("Content-Type", "application/x-pem-file")
+		w.Write(pemCert)
+	})
+
+	http.HandleFunc("/ca-key", func(w http.ResponseWriter, r *http.Request) {
+		_, caKey, err := LoadCertAndKeyFromFile(caCertPath, caKeyPath)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to load CA private key: %v", err), http.StatusInternalServerError)
+			return
+		}
+		pemKey := pem.EncodeToMemory(caKey)
+		w.Header().Set("Content-Type", "application/x-pem-file")
+		w.Write(pemKey)
+	})
 	// Generate CA cert and key
 	cert, privPem, err := CreateRootCA(pkix.Name{
 		CommonName:         "My Root CA",

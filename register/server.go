@@ -1,6 +1,7 @@
 package register
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -54,7 +55,21 @@ func (r *Register) GetServer(args *ServerKey, reply *ServerInfo) error {
 var _ rpctypes.RpcRegister = (*Register)(nil)
 
 func StartRegisterServer(port string) error {
-	err := rpc.RegisterName(rpctypes.RPCServerKey.ServerName, NewRegister())
+	register := NewRegister()
+	http.HandleFunc("/servers", func(w http.ResponseWriter, r *http.Request) {
+		register.mu.RLock()
+		defer register.mu.RUnlock()
+
+		w.Header().Set("Content-Type", "application/json")
+		serializableMap := make(map[string]ServerInfo)
+		for key, value := range register.ServerMap {
+			serializableMap[key.ServerName] = value
+		}
+		if err := json.NewEncoder(w).Encode(serializableMap); err != nil {
+			http.Error(w, "Failed to encode server map", http.StatusInternalServerError)
+		}
+	})
+	err := rpc.RegisterName(rpctypes.RPCServerKey.ServerName, register)
 	if err != nil {
 		return fmt.Errorf("error registering RPC server: %v", err)
 	}
