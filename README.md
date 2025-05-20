@@ -1,5 +1,24 @@
 # PKI
 
+~~~ shell
+go run register.go
+go run ra.go
+go run ca.go
+go run http.go
+cd ft
+npm run dev
+~~~
+
+## 启动后路径说明
+
+<http://localhost:3001/servers> 服务注册中心写入的信息说明
+<http://localhost:8082/ca-cert> ca初始化后的根证书
+<http://localhost:8082/ca-key> ca生成的密钥
+
+<http://localhost:8080/key> 客户端本地生成的密钥
+<http://localhost:8080/csr> 客户端本地生成的csr
+<http://localhost:8080/cert> 客户端从ca得到的证书
+
 ## 环境要求
 
 在ubuntu环境下，安装OpenSSL与go环境，同时要有gcc编译器
@@ -45,19 +64,21 @@ go run ./http.go
 4. 开发一个简单的透明日志记录系统，记录所有签发、更新、吊销的证书。、
 
 提高要求：
+
 1. 设计引用更高安全性的签名算法（如ECC、SHA-256、SHA-3等）；
 2. 构建一个基于内部CA的多级信任体系，扩展证书的适用范围和可信度；
 3. 设计一个自动更新和替换过期自签名证书的系统，避免因证书过期导致的安全风险；
 4. 加强证书验证或使用双向SSL/TLS，防范中间人攻击。
 
-
 ## 说明
+
 这里要共享的服务地址只要注册服务发现中心的地址就够了，通过注册服务发现中心的地址就可得到CA与RA的地址
 请默认使用`3001`端口来启动服务注册发现中心
 
 ## 流程说明
 
 主要有以下4个部分组成
+
 1. 客户端
 2. 注册中心（RA）
 3. 认证中心（CA）
@@ -74,12 +95,13 @@ go run ./http.go
 ![alt text](https://ucc.alicdn.com/pic/developer-ecology/89c9c3f19e994b36bb1ecbe2594fed82.png?x-oss-process=image%2Fresize%2Cw_1400%2Fformat%2Cwebp)
 
 ### 两个客户端之间的通信流程
+
 如上，客户端通过ca获取证书
 
 - 步骤1：建立连接
-    
+
     客户端A向客户端B发起连接请求。
-    
+
     客户端B响应请求，并准备进行安全通信。
 
 - 步骤2：交换证书
