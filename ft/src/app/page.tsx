@@ -274,7 +274,7 @@ function ReturnType1() {
 
 function ReturnType2() {
   return (
-    <div>
+    <div className=" px-72 py-18">
       <div>
         <div className="border border-blue-300 p-4 rounded-4xl bg-blue-400">初始化工作区</div>
         <div className="p-4">
